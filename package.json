@@ -1,16 +1,26 @@
 {
   "name": "equity-node",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "> equity-Cms 的 node 端",
+  "main": "index.js",
   "scripts": {
-    "start": "node ./bin/www"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gaoyuqian/equity-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Gaoyuqian/equity-node/issues"
+  },
+  "homepage": "https://github.com/Gaoyuqian/equity-node#readme",
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "ejs": "~2.6.1",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1"
+    "express": "^4.17.1",
+    "iconv-lite": "^0.5.1",
+    "request-promise": "^4.2.4",
+    "request": "^2.88.0"
   }
 }
