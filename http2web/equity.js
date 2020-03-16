@@ -1,14 +1,14 @@
 const { app } = require('./index.js')
-const { getSingleEquityInfo } = require('../http2service/requestEquity.js')
+const { getSingleEquityInfoCN } = require('../http2service/requestEquity.js')
 const equityObj = require('../data/equityData2Code.json')
 const util = require('../util/format.js')
 function main() {
   // 获取个股信息或多个股票的信息
-  app.get('/test/getInfo', (req, res) => {
+  app.get('/equity/getSingleDayInfo', (req, res) => {
     let { list } = req.query
     list = list.split(',')
     const name = util.key2val(equityObj, list)
-    getSingleEquityInfo(list, name)
+    getSingleEquityInfoCN(list, name)
       // 写成通用的接口
       .then(data => {
         let carry = 0
