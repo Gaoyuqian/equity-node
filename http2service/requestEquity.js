@@ -1,5 +1,4 @@
-const { rq, iconv } = require('../dependenciesList/index.js')
-const { mapEquityData } = require('../util/format.js')
+const { rq, iconv, http, cheerio } = require('../dependenciesList/index.js')
 
 const opt = {
   url: 'http://hq.sinajs.cn/list=sh601006',
@@ -21,6 +20,44 @@ function getAllEquityInfoCN(channel) {
   }
   return rq(opt)
 }
+function getSomePointEquityInfoUS() {
+  // 新浪爬取
+  return new Promise((resolve, reject) => {
+    http.get(
+      'http://vip.stock.finance.sina.com.cn/usstock/ustotal.php',
+      res => {
+        var length = 0
+        var arr = []
+        let result = []
+        let reg = /^(.*(?=\())\((.+?)\)/
+        res.on('data', function(chunk) {
+          arr.push(chunk)
+          length += chunk.length
+        })
+        res.on(
+          'end',
+          () => {
+            var data = Buffer.concat(arr, length)
+            var change_data = iconv.decode(data, 'gb2312')
+            var $ = cheerio.load(change_data.toString())
+            $('.col_div a').each(async (index, item) => {
+              let ele = $(item)
+              if (ele.text()) {
+                const title = ele.text()
+                const res = title.match(reg)
+                result.push(`${index},${res[2]},${res[1]}`)
+              }
+            })
+            resolve(result)
+          },
+          err => {
+            console.log('error', err)
+          }
+        )
+      }
+    )
+  })
+}
 function getAllEquityInfoHK(channel) {
   let opt = {
     url: 'http://api.jinshuyuan.net/get_stkhk_dic',
@@ -29,6 +66,10 @@ function getAllEquityInfoHK(channel) {
   return rq(opt)
 }
 function getAllEquityInfo() {
-  return Promise.all([getAllEquityInfoCN(), getAllEquityInfoHK()])
+  return Promise.all([
+    getAllEquityInfoCN(),
+    getAllEquityInfoHK(),
+    getSomePointEquityInfoUS()
+  ])
 }
 module.exports = { getSingleEquityInfoCN, getAllEquityInfo, getAllEquityInfoCN }

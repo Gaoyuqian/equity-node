@@ -5,5 +5,6 @@ const rq = require('request-promise')
 const request = require('request')
 const fs = require('fs')
 const express = require('express')
+const cheerio = require('cheerio')
 const app = express()
-module.exports = { iconv, https, http, rq, request, app, fs }
+module.exports = { iconv, https, http, rq, request, app, fs, cheerio }

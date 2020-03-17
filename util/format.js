@@ -7,14 +7,18 @@ module.exports = {
   },
   mapEquityData: str => {
     let data = {}
+    console.log(str)
     str = str.flat()
     str.forEach(item => {
       let arr = item.split(',')
       if (arr[1]) {
-        data[arr[1].toLowerCase()] = arr[2]
+        data[arr[1].toLowerCase()] = arr[2].toLowerCase()
       }
     })
     return data
+  },
+  mapEquityDataFromSina: array => {
+    let data = {}
   },
   isPassTime: (time1, time2, timespan) => {
     //? params begintime endtime span
