@@ -1,38 +1,99 @@
 const { app } = require('./index.js')
-const { getSingleEquityInfoCN } = require('../http2service/requestEquity.js')
+const { getSingleEquityInfo } = require('../http2service/requestEquity.js')
 const equityObj = require('../data/equityData2Code.json')
-const util = require('../util/format.js')
+const {
+  formatEquityBaseInfoCN,
+  formatEquityBaseInfoUS,
+  formatEquityBaseInfoHK,
+  key2val
+} = require('../util/format.js')
 function main() {
   // 获取个股信息或多个股票的信息
+  app.get('/equity/getBaseInfo', (req, res) => {
+    // us：道指 纳指 标普
+    // hk：恒指
+    // cn：上指 深指 创业板指数
+    let { channel } = req.query
+    const map = {
+      cn: ['sh000001', 'sz399001', 'sz399006'],
+      hk: ['hkHSI'],
+      us: ['gb_dji', 'gb_ixic', 'gb_inx'],
+      all: [
+        'sh000001',
+        'sz399001',
+        'sz399006',
+        'hkHSI',
+        'gb_dji',
+        'gb_ixic',
+        'gb_inx'
+      ]
+    }
+    if (!channel) {
+      getSingleEquityInfo(map['all']).then(data => {
+        //根据不同地区 写不同的整合函数 写入util
+        formatEquityBaseInfoUS(
+          data,
+          [
+            '上证指数',
+            '深成指数',
+            '创业板指数',
+            '恒生指数',
+            '道琼斯指数',
+            '纳斯达克指数',
+            '标普500指数'
+          ],
+          [
+            'sh000001',
+            'sz399001',
+            'sz399006',
+            'hkHSI',
+            'gb_dji',
+            'gb_ixic',
+            'gb_inx'
+          ]
+        )
+        // res.send({ code: 0, result: data })
+      })
+    }
+    channel = channel.toLowerCase()
+    if (channel !== 'us' && channel !== 'hk' && channel !== 'cn') {
+      res.send({ code: 0, error: 'channel info error' })
+      return
+    }
+    getSingleEquityInfo(map[channel], channel === 'hk' ? false : true).then(
+      data => {
+        //根据不同地区 写不同的整合函数 写入util
+        let name = []
+        let list = []
+        let result = []
+        if (channel === 'us') {
+          name = ['道琼斯指数', '纳斯达克指数', '标普500指数']
+          list = ['gb_dji', 'gb_ixic', 'gb_inx']
+          result = formatEquityBaseInfoUS(data, name, list)
+        } else if (channel === 'hk') {
+          name = ['恒生指数']
+          list = ['hkHSI']
+          result = formatEquityBaseInfoHK(data, name, list)
+        } else {
+          name = ['上证指数', '深成指数', '创业板指数']
+          list = ['sh000001', 'sz399001', 'sz399006']
+          result = formatEquityBaseInfoCN(data, name, list)
+        }
+        res.send({ code: 1, result })
+      }
+    )
+  })
   app.get('/equity/getSingleDayInfo', (req, res) => {
     let { list } = req.query
     list = list.split(',')
-    const name = util.key2val(equityObj, list)
-    getSingleEquityInfoCN(list, name)
+    const name = key2val(equityObj, list)
+    getSingleEquityInfo(list)
       // 写成通用的接口
       .then(data => {
-        let carry = 0
-        let info = data.split(/[\n]/)
-        if (data.length < 4) {
-          res.send({
-            code: 0,
-            error: '母接口查询错误'
-          })
-          return
-        }
-        info = info.slice(0, info.length - 1)
-        info = info.map(item => {
-          // 组装返回给web端的数据
-          // params: info ===== 组装成功的数据 也可以写入数据库
-          item = item.split(',').slice(0, 32)
-          item[0] = name[carry]
-          item.push(list[carry])
-          carry++
-          return item
-        })
+        const result = formatEquityBaseInfoCN(data, name, list)
         res.send({
           code: 1,
-          result: { info }
+          result
         })
       })
       .catch(error => {

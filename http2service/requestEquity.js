@@ -7,9 +7,9 @@ const opt = {
 // const url = 'http://hq.sinajs.cn/list=sh601006'
 // http://api.jinshuyuan.net/get_stk_dic //获取a股所有股票名称
 // http://api.jinshuyuan.net/get_stkhk_dic 获取港股所有股票名称
-function getSingleEquityInfoCN(opt) {
+function getSingleEquityInfo(opt, format = true) {
   opt = opt.map(item => {
-    return item.toLowerCase()
+    return format ? item.toLowerCase() : item
   })
   return rq(`http://hq.sinajs.cn/list=${opt.join(',')}`)
 }
@@ -72,4 +72,4 @@ function getAllEquityInfo() {
     getSomePointEquityInfoUS()
   ])
 }
-module.exports = { getSingleEquityInfoCN, getAllEquityInfo, getAllEquityInfoCN }
+module.exports = { getSingleEquityInfo, getAllEquityInfo, getAllEquityInfoCN }
