@@ -28,60 +28,35 @@ function main() {
         'gb_inx'
       ]
     }
-    if (!channel) {
-      getSingleEquityInfo(map['all']).then(data => {
-        //根据不同地区 写不同的整合函数 写入util
-        formatEquityBaseInfoUS(
-          data,
-          [
-            '上证指数',
-            '深成指数',
-            '创业板指数',
-            '恒生指数',
-            '道琼斯指数',
-            '纳斯达克指数',
-            '标普500指数'
-          ],
-          [
-            'sh000001',
-            'sz399001',
-            'sz399006',
-            'hkHSI',
-            'gb_dji',
-            'gb_ixic',
-            'gb_inx'
-          ]
-        )
-        // res.send({ code: 0, result: data })
-      })
-    }
-    channel = channel.toLowerCase()
+    channel = channel ? channel.toLowerCase() : 'all'
     if (channel !== 'us' && channel !== 'hk' && channel !== 'cn') {
       res.send({ code: 0, error: 'channel info error' })
       return
     }
-    getSingleEquityInfo(map[channel], channel === 'hk' ? false : true).then(
-      data => {
-        //根据不同地区 写不同的整合函数 写入util
-        let name = []
-        let list = []
-        let result = []
-        if (channel === 'us') {
-          name = ['道琼斯指数', '纳斯达克指数', '标普500指数']
-          list = ['gb_dji', 'gb_ixic', 'gb_inx']
-          result = formatEquityBaseInfoUS(data, name, list)
-        } else if (channel === 'hk') {
-          name = ['恒生指数']
-          list = ['hkHSI']
-          result = formatEquityBaseInfoHK(data, name, list)
-        } else {
-          name = ['上证指数', '深成指数', '创业板指数']
-          list = ['sh000001', 'sz399001', 'sz399006']
-          result = formatEquityBaseInfoCN(data, name, list)
-        }
-        res.send({ code: 1, result })
+    getSingleEquityInfo(
+      map[channel],
+      channel === 'hk' || channel === 'all' ? false : true
+    ).then(data => {
+      //根据不同地区 写不同的整合函数 写入util
+      let name = []
+      let list = []
+      let result = []
+
+      if (channel === 'us' || channel === 'all') {
+        name = ['道琼斯', '纳斯达克', '标普500']
+        list = ['gb_dji', 'gb_ixic', 'gb_inx']
+        result = formatEquityBaseInfoUS(data, name, list)
+      } else if (channel === 'hk' || channel === 'all') {
+        name = ['恒生指数']
+        list = ['hkHSI']
+        result = formatEquityBaseInfoHK(data, name, list)
+      } else if (channel === 'cn' || channel === 'all') {
+        name = ['上证指数', '深成指数', '创业板']
+        list = ['sh000001', 'sz399001', 'sz399006']
+        result = formatEquityBaseInfoCN(data, name, list)
       }
-    )
+      res.send({ code: 1, result })
+    })
   })
   app.get('/equity/getSingleDayInfo', (req, res) => {
     let { list } = req.query
@@ -90,6 +65,7 @@ function main() {
     getSingleEquityInfo(list)
       // 写成通用的接口
       .then(data => {
+        // 需要判断查询的是哪个地区的股票 作区分
         const result = formatEquityBaseInfoCN(data, name, list)
         res.send({
           code: 1,
