@@ -11,6 +11,8 @@ function getSingleEquityInfo(opt, format = true) {
   opt = opt.map(item => {
     return format ? item.toLowerCase() : item
   })
+  // getSingleEquityInfo
+  console.log(opt.join(','))
   return rq(`http://hq.sinajs.cn/list=${opt.join(',')}`)
 }
 function getAllEquityInfoCN(channel) {
@@ -48,11 +50,12 @@ function getSomePointEquityInfoUS() {
                 result.push(`${index},${res[2]},${res[1]}`)
               }
             })
+            result.push(`999,ixic,纳斯达克`)
+            result.push(`1000,dji,道琼斯`)
+            result.push(`1001,inx,标普500`)
             resolve(result)
           },
-          err => {
-            console.log('error', err)
-          }
+          err => {}
         )
       }
     )

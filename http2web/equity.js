@@ -5,7 +5,8 @@ const {
   formatEquityBaseInfoCN,
   formatEquityBaseInfoUS,
   formatEquityBaseInfoHK,
-  key2val
+  key2val,
+  spellEquityPre
 } = require('../util/format.js')
 function main() {
   // 获取个股信息或多个股票的信息
@@ -41,7 +42,6 @@ function main() {
       let name = []
       let list = []
       let result = []
-
       if (channel === 'us' || channel === 'all') {
         name = ['道琼斯', '纳斯达克', '标普500']
         list = ['gb_dji', 'gb_ixic', 'gb_inx']
@@ -55,29 +55,49 @@ function main() {
         list = ['sh000001', 'sz399001', 'sz399006']
         result = formatEquityBaseInfoCN(data, name, list)
       }
-      res.send({ code: 1, result })
+      res.send({ code: 1, result, requestDate: new Date().getTime() })
     })
   })
   app.get('/equity/getSingleDayInfo', (req, res) => {
     let { list } = req.query
     list = list.split(',')
     const name = key2val(equityObj, list)
+    list = spellEquityPre(list)
+    let result = []
     getSingleEquityInfo(list)
       // 写成通用的接口
-      .then(data => {
-        // 需要判断查询的是哪个地区的股票 作区分
-        const result = formatEquityBaseInfoCN(data, name, list)
-        res.send({
-          code: 1,
-          result
-        })
-      })
-      .catch(error => {
-        res.send({
-          code: 0,
-          error: error
-        })
-      })
+      .then(
+        data => {
+          // 需要判断查询的是哪个地区的股票 作区分
+          data = data.split(/[\n]/)
+          list.forEach((item, index) => {
+            if (item.startsWith('gb_')) {
+              result.push(
+                ...formatEquityBaseInfoUS(data[index], name[index], [item])
+              )
+            } else if (item.startsWith('hk')) {
+              result.push(
+                ...formatEquityBaseInfoHK(data[index], name[index], [item])
+              )
+            } else {
+              result.push(
+                ...formatEquityBaseInfoCN(data[index], name[index], [item])
+              )
+            }
+          })
+          res.send({
+            code: 1,
+            result,
+            requestDate: new Date().getTime()
+          })
+        },
+        error => {
+          res.send({
+            code: 0,
+            error: error
+          })
+        }
+      )
   })
 }
 

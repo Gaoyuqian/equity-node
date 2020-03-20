@@ -10,6 +10,7 @@ function write() {
   const lastUpdateTime = readFileData('data/lastUpdateEquityInfo.json')
   const nowDate = new Date()
   const oneDay = 86400000
+
   if (isPassTime(nowDate, lastUpdateTime, oneDay)) {
     getAllEquityInfo()
       .then(str => {
