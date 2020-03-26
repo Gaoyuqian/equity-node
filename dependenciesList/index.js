@@ -7,4 +7,5 @@ const fs = require('fs')
 const express = require('express')
 const cheerio = require('cheerio')
 const app = express()
-module.exports = { iconv, https, http, rq, request, app, fs, cheerio }
+const tough = require('tough-cookie')
+module.exports = { iconv, https, http, rq, request, app, fs, cheerio, tough }

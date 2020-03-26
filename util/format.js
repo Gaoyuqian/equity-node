@@ -54,6 +54,7 @@ module.exports = {
     })
     return result
   },
+  formatXueqiuKlineInfo: data => {},
   formatEquityBaseInfoHK: (data, name, list) => {
     let info = data.split(/[\n]/)
 
@@ -126,7 +127,7 @@ module.exports = {
       info[3] = pre_count[0]
       info[4] = pre_count[1]
       info[13] = toFixed2(item[21])
-      info[14] = toFixed2(item[22])
+      info[14] = `${toFixed2(item[22])}%`
       info[15] = toFixed2(item[23])
       info[16] = item[3].split(' ')[0]
       info[17] = item[3].split(' ')[1]

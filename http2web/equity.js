@@ -1,5 +1,8 @@
 const { app } = require('./index.js')
-const { getSingleEquityInfo } = require('../http2service/requestEquity.js')
+const {
+  getSingleEquityInfo,
+  getDayKlineInfo
+} = require('../http2service/requestEquity.js')
 const equityObj = require('../data/equityData2Code.json')
 const {
   formatEquityBaseInfoCN,
@@ -98,6 +101,15 @@ function main() {
           })
         }
       )
+  })
+  app.get('/equity/getDayLineInfo', (req, res) => {
+    getDayKlineInfo(req.query).then(data => {
+      res.send({
+        code: 1,
+        result: JSON.parse(data).data,
+        requestDate: new Date().getTime()
+      })
+    })
   })
 }
 
