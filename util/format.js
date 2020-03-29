@@ -54,7 +54,31 @@ module.exports = {
     })
     return result
   },
-  formatXueqiuKlineInfo: data => {},
+  formatXueqiuKlineInfo: (data, columnList) => {
+    const column = data.data.column
+    const indexResult = columnList.map(item => {
+      return column.findIndex(item$ => {
+        return item$ === item
+      })
+    })
+    const result = []
+    data.data.item.forEach((item, index) => {
+      const temp = []
+      indexResult.forEach((item$, index$) => {
+        temp.push(item[item$])
+      })
+      result.push(temp)
+    })
+    let result_ = []
+    result.forEach(item => {
+      const tempObj = {}
+      item.forEach((item$, index$) => {
+        tempObj[columnList[index$]] = item$
+      })
+      result_.push(tempObj)
+    })
+    return result_
+  },
   formatEquityBaseInfoHK: (data, name, list) => {
     let info = data.split(/[\n]/)
 

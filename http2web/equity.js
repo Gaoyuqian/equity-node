@@ -9,7 +9,8 @@ const {
   formatEquityBaseInfoUS,
   formatEquityBaseInfoHK,
   key2val,
-  spellEquityPre
+  spellEquityPre,
+  formatXueqiuKlineInfo
 } = require('../util/format.js')
 function main() {
   // 获取个股信息或多个股票的信息
@@ -103,10 +104,19 @@ function main() {
       )
   })
   app.get('/equity/getDayLineInfo', (req, res) => {
+    // query { symbol,columnList what you need }
     getDayKlineInfo(req.query).then(data => {
+      if (typeof data === 'string') {
+        data = JSON.parse(data)
+      }
+      let _data = formatXueqiuKlineInfo(
+        data,
+        req.query.column || data.data.column
+      )
       res.send({
         code: 1,
-        result: JSON.parse(data).data,
+        result: _data,
+        symbol: data.data.symbol,
         requestDate: new Date().getTime()
       })
     })

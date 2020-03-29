@@ -43,17 +43,16 @@ function getDayKlineInfo(opt_) {
     },
     opt_
   )
-  const url = `http://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=${
-    opt.symbol
-  }&begin=${opt.begin}&period=${opt.period}&type=${opt.type}&count=${opt.count}`
+  const url = `http://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=${opt.symbol.toUpperCase()}&begin=${
+    opt.begin
+  }&period=${opt.period}&type=${opt.type}&count=${opt.count}`
   const opt$ = {
     url,
     jar
   }
-  console.log(opt$.url)
   return rq(opt$)
 }
-function getAllEquityInfoCN(channel) {
+function getAllEquityInfoCN() {
   let opt = {
     url: 'http://api.jinshuyuan.net/get_stk_dic',
     transform: body => body.split('<br/>').slice(1)
@@ -99,7 +98,7 @@ function getSomePointEquityInfoUS() {
     )
   })
 }
-function getAllEquityInfoHK(channel) {
+function getAllEquityInfoHK() {
   let opt = {
     url: 'http://api.jinshuyuan.net/get_stkhk_dic',
     transform: body => body.split('<br/>').slice(1)
