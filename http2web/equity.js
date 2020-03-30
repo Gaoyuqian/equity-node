@@ -1,7 +1,8 @@
 const { app } = require('./index.js')
 const {
   getSingleEquityInfo,
-  getDayKlineInfo
+  getDayKlineInfo,
+  getMinuteLineInfo
 } = require('../http2service/requestEquity.js')
 const equityObj = require('../data/equityData2Code.json')
 const {
@@ -10,7 +11,8 @@ const {
   formatEquityBaseInfoHK,
   key2val,
   spellEquityPre,
-  formatXueqiuKlineInfo
+  formatXueqiuKlineInfo2KeyValue,
+  getXueqiuInfo
 } = require('../util/format.js')
 function main() {
   // 获取个股信息或多个股票的信息
@@ -23,44 +25,35 @@ function main() {
       cn: ['sh000001', 'sz399001', 'sz399006'],
       hk: ['hkHSI'],
       us: ['gb_dji', 'gb_ixic', 'gb_inx'],
-      all: [
-        'sh000001',
-        'sz399001',
-        'sz399006',
-        'hkHSI',
-        'gb_dji',
-        'gb_ixic',
-        'gb_inx'
-      ]
+      all: ['sh000001', 'sz399001', 'sz399006', 'hkHSI', 'gb_dji', 'gb_ixic', 'gb_inx']
     }
     channel = channel ? channel.toLowerCase() : 'all'
     if (channel !== 'us' && channel !== 'hk' && channel !== 'cn') {
       res.send({ code: 0, error: 'channel info error' })
       return
     }
-    getSingleEquityInfo(
-      map[channel],
-      channel === 'hk' || channel === 'all' ? false : true
-    ).then(data => {
-      //根据不同地区 写不同的整合函数 写入util
-      let name = []
-      let list = []
-      let result = []
-      if (channel === 'us' || channel === 'all') {
-        name = ['道琼斯', '纳斯达克', '标普500']
-        list = ['gb_dji', 'gb_ixic', 'gb_inx']
-        result = formatEquityBaseInfoUS(data, name, list)
-      } else if (channel === 'hk' || channel === 'all') {
-        name = ['恒生指数']
-        list = ['hkHSI']
-        result = formatEquityBaseInfoHK(data, name, list)
-      } else if (channel === 'cn' || channel === 'all') {
-        name = ['上证指数', '深成指数', '创业板']
-        list = ['sh000001', 'sz399001', 'sz399006']
-        result = formatEquityBaseInfoCN(data, name, list)
+    getSingleEquityInfo(map[channel], channel === 'hk' || channel === 'all' ? false : true).then(
+      data => {
+        //根据不同地区 写不同的整合函数 写入util
+        let name = []
+        let list = []
+        let result = []
+        if (channel === 'us' || channel === 'all') {
+          name = ['道琼斯', '纳斯达克', '标普500']
+          list = ['gb_dji', 'gb_ixic', 'gb_inx']
+          result = formatEquityBaseInfoUS(data, name, list)
+        } else if (channel === 'hk' || channel === 'all') {
+          name = ['恒生指数']
+          list = ['hkHSI']
+          result = formatEquityBaseInfoHK(data, name, list)
+        } else if (channel === 'cn' || channel === 'all') {
+          name = ['上证指数', '深成指数', '创业板']
+          list = ['sh000001', 'sz399001', 'sz399006']
+          result = formatEquityBaseInfoCN(data, name, list)
+        }
+        res.send({ code: 1, result, requestDate: new Date().getTime() })
       }
-      res.send({ code: 1, result, requestDate: new Date().getTime() })
-    })
+    )
   })
   app.get('/equity/getSingleDayInfo', (req, res) => {
     let { list } = req.query
@@ -76,17 +69,11 @@ function main() {
           data = data.split(/[\n]/)
           list.forEach((item, index) => {
             if (item.startsWith('gb_')) {
-              result.push(
-                ...formatEquityBaseInfoUS(data[index], name[index], [item])
-              )
+              result.push(...formatEquityBaseInfoUS(data[index], name[index], [item]))
             } else if (item.startsWith('hk')) {
-              result.push(
-                ...formatEquityBaseInfoHK(data[index], name[index], [item])
-              )
+              result.push(...formatEquityBaseInfoHK(data[index], name[index], [item]))
             } else {
-              result.push(
-                ...formatEquityBaseInfoCN(data[index], name[index], [item])
-              )
+              result.push(...formatEquityBaseInfoCN(data[index], name[index], [item]))
             }
           })
           res.send({
@@ -106,20 +93,38 @@ function main() {
   app.get('/equity/getDayLineInfo', (req, res) => {
     // query { symbol,columnList what you need }
     getDayKlineInfo(req.query).then(data => {
+      let { symbol, column } = req.query
+
       if (typeof data === 'string') {
         data = JSON.parse(data)
       }
-      let _data = formatXueqiuKlineInfo(
-        data,
-        req.query.column || data.data.column
-      )
+      // let _data = formatXueqiuKlineInfo(data, req.query.column || data.data.column)
+      // let _data = formatXueqiuKlineInfo2KeyValue(data, req.query.column || data.data.column)
+      let _data = formatXueqiuKlineInfo2KeyValue(data, column || data.data.column)
+      let __data = getXueqiuInfo(_data)
       res.send({
         code: 1,
-        result: _data,
-        symbol: data.data.symbol,
+        result: __data,
+        symbol,
         requestDate: new Date().getTime()
       })
     })
+  })
+  app.get('/equity/getBaseInfoXueqiu', (req, res) => {
+    // formatXueqiuKlineInfo
+    getMinuteLineInfo(req.query).then(
+      data => {
+        let { symbol, column } = req.query
+        const _data = getXueqiuInfo(JSON.parse(data).data.items, column)
+        res.send({
+          code: 1,
+          result: _data,
+          symbol,
+          requestDate: new Date().getTime()
+        })
+      },
+      err => {}
+    )
   })
 }
 

@@ -1,10 +1,4 @@
-const {
-  rq,
-  iconv,
-  http,
-  cheerio,
-  tough
-} = require('../dependenciesList/index.js')
+const { rq, iconv, http, cheerio, tough } = require('../dependenciesList/index.js')
 
 let cookie = new tough.Cookie({
   key: 'xqat',
@@ -15,6 +9,8 @@ let cookie = new tough.Cookie({
 })
 let jar = rq.jar()
 jar.setCookie(cookie.toString(), 'http://stock.xueqiu.com')
+jar.setCookie(cookie.toString(), 'https://stock.xueqiu.com')
+
 const opt = {
   url: 'http://hq.sinajs.cn/list=sh601006',
   transform: body => iconv.decode(body, 'gb2312')
@@ -23,7 +19,8 @@ const opt = {
 // http://api.jinshuyuan.net/get_stk_dic //获取a股所有股票名称
 // http://api.jinshuyuan.net/get_stkhk_dic 获取港股所有股票名称
 
-// http://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=BIDU&begin=1585218102683&period=day&type=before&count=-242
+// http://stock.xueqiu.com/v5/stock/chart/kline.json?symbol=BIDU&begin=1585218102683&period=day&type=before&count=-242 日k
+// https://stock.xueqiu.com/v5/stock/chart/minute.json?symbol=SZ399006&period=1d 分时数据
 function getSingleEquityInfo(opt, format = true) {
   opt = opt.map(item => {
     return format ? item.toLowerCase() : item
@@ -32,6 +29,16 @@ function getSingleEquityInfo(opt, format = true) {
 
   return rq(`http://hq.sinajs.cn/list=${opt.join(',')}`)
 }
+function getMinuteLineInfo(opt) {
+  //! 根据这个获得当前时间点数据 取最后一个值
+  return rq({
+    url: `https://stock.xueqiu.com/v5/stock/chart/minute.json?symbol=${
+      opt.symbol
+    }&period=${opt.period || '1d'}`,
+    jar: jar
+  })
+}
+
 function getDayKlineInfo(opt_) {
   // opt.symbol
   const opt = Object.assign(
@@ -60,42 +67,39 @@ function getAllEquityInfoCN() {
   return rq(opt)
 }
 function getSomePointEquityInfoUS() {
-  // 新浪爬取
+  // !新浪爬取 准备修改
   return new Promise((resolve, reject) => {
-    http.get(
-      'http://vip.stock.finance.sina.com.cn/usstock/ustotal.php',
-      res => {
-        var length = 0
-        var arr = []
-        let result = []
-        let reg = /^(.*(?=\())\((.+?)\)/
-        res.on('data', function(chunk) {
-          arr.push(chunk)
-          length += chunk.length
-        })
-        res.on(
-          'end',
-          () => {
-            var data = Buffer.concat(arr, length)
-            var change_data = iconv.decode(data, 'gb2312')
-            var $ = cheerio.load(change_data.toString())
-            $('.col_div a').each(async (index, item) => {
-              let ele = $(item)
-              if (ele.text()) {
-                const title = ele.text()
-                const res = title.match(reg)
-                result.push(`${index},${res[2]},${res[1]}`)
-              }
-            })
-            result.push(`999,ixic,纳斯达克`)
-            result.push(`1000,dji,道琼斯`)
-            result.push(`1001,inx,标普500`)
-            resolve(result)
-          },
-          err => {}
-        )
-      }
-    )
+    http.get('http://vip.stock.finance.sina.com.cn/usstock/ustotal.php', res => {
+      var length = 0
+      var arr = []
+      let result = []
+      let reg = /^(.*(?=\())\((.+?)\)/
+      res.on('data', function(chunk) {
+        arr.push(chunk)
+        length += chunk.length
+      })
+      res.on(
+        'end',
+        () => {
+          var data = Buffer.concat(arr, length)
+          var change_data = iconv.decode(data, 'gb2312')
+          var $ = cheerio.load(change_data.toString())
+          $('.col_div a').each(async (index, item) => {
+            let ele = $(item)
+            if (ele.text()) {
+              const title = ele.text()
+              const res = title.match(reg)
+              result.push(`${index},${res[2]},${res[1]}`)
+            }
+          })
+          result.push(`999,ixic,纳斯达克`)
+          result.push(`1000,dji,道琼斯`)
+          result.push(`1001,inx,标普500`)
+          resolve(result)
+        },
+        err => {}
+      )
+    })
   })
 }
 function getAllEquityInfoHK() {
@@ -106,15 +110,12 @@ function getAllEquityInfoHK() {
   return rq(opt)
 }
 function getAllEquityInfo() {
-  return Promise.all([
-    getAllEquityInfoCN(),
-    getAllEquityInfoHK(),
-    getSomePointEquityInfoUS()
-  ])
+  return Promise.all([getAllEquityInfoCN(), getAllEquityInfoHK(), getSomePointEquityInfoUS()])
 }
 module.exports = {
   getDayKlineInfo,
   getSingleEquityInfo,
   getAllEquityInfo,
-  getAllEquityInfoCN
+  getAllEquityInfoCN,
+  getMinuteLineInfo
 }

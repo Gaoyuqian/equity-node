@@ -22,6 +22,7 @@ const baseInfoMap = [
   'date', //13=》16
   'time' //14=》17
 ]
+const defaultColumnList = ['high']
 const computePercentAndCount = (nowPrice, lastClose) => {
   const count = parseFloat(nowPrice) - parseFloat(lastClose)
   const percent = (count / parseFloat(lastClose)) * 100
@@ -51,6 +52,38 @@ module.exports = {
   key2val: (obj, key) => {
     let result = key.map(item => {
       return obj[item.toLowerCase()]
+    })
+    return result
+  },
+
+  getXueqiuInfo: (data, columnList) => {
+    // data<ObjectArray> columnList<StringArray>
+    // return result<ObjectArray>
+    // todo 新增一个默认的columnList
+    const column = columnList || defaultColumnList
+    let result = []
+    data.forEach(item => {
+      let tempObj = {}
+      column.forEach(item$ => {
+        tempObj[item$] = item[item$]
+        console.log(tempObj)
+      })
+      result.push(tempObj)
+    })
+    return result
+  },
+  formatXueqiuKlineInfo2KeyValue: data => {
+    // data<Object>
+    // return result<Array>
+
+    let { column, item } = data.data
+    const result = []
+    item.forEach(item => {
+      let tempObj = {}
+      item.forEach((item$, index$) => {
+        tempObj[column[index$]] = item$
+      })
+      result.push(tempObj)
     })
     return result
   },
@@ -124,6 +157,26 @@ module.exports = {
     })
     return result
   },
+  // {
+  //   current: 36.005,
+  //   volume: 490720,
+  //   avg_price: 36.149,
+  //   chg: -1.005,
+  //   percent: -2.72,
+  //   timestamp: 1585315800000,
+  //   amount: 17739037,
+  //   high: 37.01,
+  //   low: 35.935,
+  //   macd: null,
+  //   kdj: null,
+  //   ratio: null,
+  //   capital: null,
+  //   volume_compare: {
+  //     volume_sum: 490720,
+  //     volume_sum_last: 291033
+  //   }
+  // }
+  formatEquityBaseInfoCN_(data, name, list) {},
   formatEquityBaseInfoUS: (data, name, list) => {
     let info = data.split(/[\n]/)
 
